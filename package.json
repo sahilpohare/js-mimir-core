@@ -1,0 +1,33 @@
+{
+  "name": "chat-node",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "nodemon ./src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./src/index.js"
+  },
+  "author": "",
+  "main": "dist/index.js",
+  "license": "ISC",
+  "dependencies": {
+    "ipfs-client": "^0.3.4",
+    "ipfs-http-client": "^49.0.4",
+    "isolated-vm": "^4.1.0",
+    "it-pipe": "^1.1.0",
+    "libp2p": "^0.31.2",
+    "libp2p-bootstrap": "^0.12.3",
+    "libp2p-gossipsub": "^0.9.0",
+    "libp2p-kad-dht": "^0.22.0",
+    "libp2p-mdns": "^0.16.0",
+    "libp2p-mplex": "^0.10.3",
+    "libp2p-noise": "^3.0.0",
+    "libp2p-secio": "^0.9.0",
+    "libp2p-tcp": "^0.15.4",
+    "libp2p-websockets": "^0.15.6",
+    "multiaddr": "^9.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.25.0"
+  }
+}
