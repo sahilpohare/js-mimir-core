@@ -12,7 +12,8 @@ async function handler({connection, stream }) {
     await pipe(stream, async (src) => {
       for await (const msg of src) {
         let data = JSON.parse(msg);
-        runTask(data.scriptHash, data.data);
+        let output = runTask(data.scriptHash, data.data);
+       
       }
     });
   } catch (err) {

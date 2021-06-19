@@ -1,8 +1,7 @@
 const fs = require("fs");
 const { mainModule } = require("process");
 const { defineCommand } = require("./interface");
-const IPFS = require("ipfs-http-client");
-const ipfs = IPFS({ host: "localhost", port: "5001", protocol: "http" });
+const {ipfs} = require('./ipfs-handler');
 const vm = require("isolated-vm");
 
 /**
@@ -27,6 +26,7 @@ async function runTask(scriptHash, data) {
 
   contents += decoder.decode();
   console.log('running script',scriptHash);
+  
   let isolate = new vm.Isolate({
     memoryLimit : 128
   });
