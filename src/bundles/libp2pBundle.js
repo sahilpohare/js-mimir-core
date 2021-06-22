@@ -8,6 +8,8 @@ import Bootstrap from "libp2p-bootstrap";
 import MDNS from "libp2p-mdns";
 import KadDHT from "libp2p-kad-dht";
 
+import { create } from "./rpcBundle.js";
+
 let bootstrapers = [
   "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
   "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
@@ -15,10 +17,10 @@ let bootstrapers = [
   "/dnsaddr/bootstrap.libp2p.io/p2p/QmZa1sAxajnQjVM8WjWXoMbmPd7NsWhfKsPkErzpm9wGkp",
   "/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
   "/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
-],
+];
 
 /**@type Libp2p.Libp2pOptions */
-const node = {
+export default {
   addresses: {
     listen: ["/ip4/0.0.0.0/tcp/0", "/ip4/0.0.0.0/tcp/0/ws"],
   },
@@ -33,7 +35,7 @@ const node = {
     peerDiscovery: {
       [Bootstrap.tag]: {
         interval: 60e3,
-        enabled: true,
+        enabled: false,
         list: bootstrapers,
       },
       [MDNS.tag]: {
@@ -43,4 +45,36 @@ const node = {
   },
 };
 
-export default node;
+/**@param {Libp2p} node */
+export async function initNode(node) {
+  let dial = await create(
+    node,
+    {
+      compute: (request) => {
+        return request;
+      },
+    },
+    "/mimir/0.0.1a"
+  );
+
+  node.connectionManager.on(
+    "peer:connect",
+    /**@param {import("libp2p/src/").Connection} connection */
+    async function (connection) {
+      console.log(
+        "Connection established to:",
+        connection.remotePeer.toB58String()
+      );
+    }
+  );
+
+  node.on(
+    "peer:discovery",
+    /**@param {import("libp2p/src/peer-routing").PeerId} peerId*/
+    async (peerId) => {
+      await node.dial(peerId);
+      let rpc = await dial(peerId);
+      console.log("Discovered:", peerId.toB58String());
+    }
+  );
+}
