@@ -9,6 +9,8 @@ import MDNS from "libp2p-mdns";
 import KadDHT from "libp2p-kad-dht";
 
 import { create } from "./rpcBundle.js";
+import { initCli } from "../utils/interface.js";
+import { handleRequest } from "../rpc/index.js";
 
 let bootstrapers = [
   "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
@@ -20,7 +22,7 @@ let bootstrapers = [
 ];
 
 /**@type Libp2p.Libp2pOptions */
-export default {
+let libp2pConfig = {
   addresses: {
     listen: ["/ip4/0.0.0.0/tcp/0", "/ip4/0.0.0.0/tcp/0/ws"],
   },
@@ -45,15 +47,30 @@ export default {
   },
 };
 
+export default libp2pConfig;
+/**
+ * @typedef MimirRpcConfig
+ * @property handleRequestRpc}
+ */
+
+/**
+ * @method
+ * @name handleRequestRpc
+ * @param {import("../rpc/index.js").MimirRequest} request
+ * @returns {Promise<import("../rpc/index.js").MimirResponse>}
+ */
+
 /**@param {Libp2p} node */
 export async function initNode(node) {
+  /**@type {MimirRpcConfig} */
+  let rpcObj = {
+    handleRequest: async (request) => {
+      return handleRequest(request, node)
+    },
+  }
   let dial = await create(
     node,
-    {
-      compute: (request) => {
-        return request;
-      },
-    },
+    rpcObj,
     "/mimir/0.0.1a"
   );
 
@@ -74,7 +91,28 @@ export async function initNode(node) {
     async (peerId) => {
       await node.dial(peerId);
       let rpc = await dial(peerId);
+      console.log(await rpc.handleRequest())
       console.log("Discovered:", peerId.toB58String());
     }
   );
+
+  return dial;
+}
+
+/**
+ * @param {Libp2p} node
+ * @returns {import('znode')} */
+export async function createNode(node){
+  try {
+    // const node = await Libp2p.create(libp2pConfig);
+    // node.handle('/p2p/mimirCloud/0.0.1a', )
+    await node.start()
+    let rpcDial = initNode(node);
+    // global.mimirNode = node;
+    initCli(node)
+    // console.log('Started Node', node.peerId.toB58String() ,node.multiaddrs);
+    return rpcDial;
+  } catch (e) {
+    throw e;
+  }
 }

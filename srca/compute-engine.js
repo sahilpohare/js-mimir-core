@@ -46,7 +46,7 @@ async function runTask(scriptHash, data) {
   isolate.dispose();
 }
 async function addTask(scriptPath) {
-  fs.readFile("./src/functions/vm-functions.js", "utf8", async (err, data) => {
+  fs.readFile("./srca/functions/vm-functions.js", "utf8", async (err, data) => {
     if (err) {
       console.error(err);
       return;

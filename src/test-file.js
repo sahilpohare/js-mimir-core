@@ -1,48 +1,33 @@
-import vm from "isolated-vm";
-// import axios from "axios";
+import taskSender from '../src/taskSenderAgent/index.js';
+import fs from 'fs'
+import ipfs from "./bundles/ipfsBundle.js";
+import { createNode } from './bundles/libp2pBundle.js';
+import { handleRequest } from './rpc/index.js';
 
-import { compute } from "./rpc/index.js";
+import Mimir from './index.js';
 
-let job = new vm.Isolate({ memoryLimit: 128 });
-let ctx = await job.createContext();
-ctx.global.setSync("global", ctx.global.derefInto());
-// ctx.global.setSync("log", (out) => {
-//   console.log(out);
-// });
-// ctx.global.setSync("axios", axios);
-// let script = await job.compileModule(
-//   `export default async function(req){ log(req.hello) }`,
-//   { filename: "function.js" }
-// );
-// try {
-//   await script.instantiate(ctx, () => {});
-//   await script.evaluate({promise : true});
-//   let func = await script.namespace.get('default', {reference : true});
-//   console.log(func)
-  
-//   await func.applySync(undefined,[{hello : 10}])
-// } catch (e) {
-//   console.log(e);
+let mimirCore1 = new Mimir();
+
+let mimirCore2 = new Mimir();
+await mimirCore1.start();
+// await mimirCore2.start();
+
+console.log('mimirCore1', mimirCore1.node.multiaddrs.map(ma=>ma.toString()));
+// console.log('mimirCore2', mimirCore2.node.multiaddrs);
+// await mimirCore1.dialHandleRequest(mimirCore2.peerId)
+// let [cid, err] = await taskSender('./exampleproject/index.js');
+// console.log(cid,err)
+
+
+// let [cid, err] = await taskSender('./tests/exampleproject/index.js');
+// if(err){
+//     // assert.fail("error")
 // }
-ctx.global.setSync('log', function(...args) {
-console.log('function',':',...args);
-});
-try{
-  let script = await job.compileScript(`
-    function cloudfunc(req,res){
-      log(req);
-      res('my res')
-    }
-  `);
-  await script.run(ctx);
-  let fnReference = await ctx.global.get("cloudfunc");
-  new Promise((resolve)=>{
-    fnReference.apply(undefined, [{name : 'sahil'}, new vm.Callback(resolve)])
-  }).then(val=>console.log({'output' : val}))
-}catch (e){
-  console.log(e);
-}
-
-
-
-job.dispose();
+// // assert.strictEqual(cid, 'QmQMPtKR9ikiC8z1FJguPxwgaKmdnkPgBaR4a4PQrf4hxN');
+// let peer = await createNode();
+// // console.log(peer)
+// console.log(await handleRequest({
+//     body : {name : "Sahil"},
+//     requestAgent : peer.peerId.toB58String(),
+//     funtionImage : cid
+// }, peer))

@@ -2,7 +2,6 @@ const Libp2p = require("libp2p");
 const DelegatedPeerRouter = require("libp2p-delegated-peer-routing");
 const DelegatedContentRouter = require("libp2p-delegated-content-routing");
 
-const Libp2p = require("libp2p");
 const TCP = require("libp2p-tcp");
 const MPlex = require("libp2p-mplex");
 const { NOISE } = require("libp2p-noise");

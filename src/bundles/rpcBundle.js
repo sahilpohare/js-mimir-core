@@ -25,6 +25,7 @@ const handler = (rpc) => {
  * @param {import("libp2p")} host The local host used to dial and make the
  * connection.
  * @param {RPCObject} rpc An object representing a set of RPC methods
+ * @returns {import("znode")}
  * as defined in {@link https://github.com/mikeal/znode}.
  */
 const dialer = (host, rpc) => {

@@ -1,6 +1,9 @@
-const {default : Axios} = require('axios');
+const express = require("express");
 
-module.exports = (req,res,rej)=>{
-    console.log('hii')
-    res(100)
-}
+let app = express();
+
+app.get('/', (req,res)=>{
+    res.send('Hii Yuraj');
+});
+
+app.listen(3000,console.log('Jingling on 3000'))

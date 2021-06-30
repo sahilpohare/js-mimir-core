@@ -17,7 +17,7 @@ import vm from "isolated-vm";
  * @param {cloudFunctionCallback} cb
  * @param {VMArgs} vmArgs
  * @param {{ memoryLimit : !Number, timeout : !Number}} options
- * @returns {Object}
+ * @returns {[Object?, Error?]}
  */
 export default async function (cloudFunc, args, vmArgs) {
   let job = new vm.Isolate({ memoryLimit: vmArgs.memoryLimit });
@@ -26,7 +26,7 @@ export default async function (cloudFunc, args, vmArgs) {
   ctx.global.setSync("log", (out) => {
     console.log(out);
   });
-  ctx.global.setSync("axios", axios);
+  // ctx.global.setSync("axios", axios);
   let script = await job.compileModule(cloudFunc, { filename: "function.js" });
   try {
     await script.instantiate(ctx, () => {});
@@ -38,10 +38,11 @@ export default async function (cloudFunc, args, vmArgs) {
         func.apply(undefined, [...args, new vm.Callback(resolve), new vm.Callback(reject)])
       ), null]
     }catch (e){
+      job.dispose();
       return [null, e]
     }
   } catch (e) {
+    job.dispose();
     return [null, e]
   }
-  job.dispose();
 }
