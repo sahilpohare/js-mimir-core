@@ -8,10 +8,6 @@ import Bootstrap from "libp2p-bootstrap";
 import MDNS from "libp2p-mdns";
 import KadDHT from "libp2p-kad-dht";
 
-import { create } from "./rpcBundle.js";
-import { initCli } from "../utils/interface.js";
-import { handleRequest } from "../rpc/index.js";
-
 let bootstrapers = [
   "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
   "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
@@ -62,26 +58,15 @@ export default libp2pConfig;
 
 /**@param {Libp2p} node */
 export async function initNode(node) {
-  /**@type {MimirRpcConfig} */
-  let rpcObj = {
-    handleRequest: async (request) => {
-      return handleRequest(request, node)
-    },
-  }
-  let dial = await create(
-    node,
-    rpcObj,
-    "/mimir/0.0.1a"
-  );
-
+ 
   node.connectionManager.on(
     "peer:connect",
     /**@param {import("libp2p/src/").Connection} connection */
     async function (connection) {
-      console.log(
-        "Connection established to:",
-        connection.remotePeer.toB58String()
-      );
+      // console.log(
+      //   "Connection established to:",
+      //   connection.remotePeer.toB58String()
+      // );
     }
   );
 
@@ -89,30 +74,12 @@ export async function initNode(node) {
     "peer:discovery",
     /**@param {import("libp2p/src/peer-routing").PeerId} peerId*/
     async (peerId) => {
-      await node.dial(peerId);
-      let rpc = await dial(peerId);
-      console.log(await rpc.handleRequest())
-      console.log("Discovered:", peerId.toB58String());
+      try{
+        // await node.dialProtocol(peerId,PROTOCOL);
+        // console.log("Dialed:", peerId.toB58String());
+        // console.log(node.peerStore.peers.forEach((p)=>p))
+      }catch{
+      }
     }
   );
-
-  return dial;
-}
-
-/**
- * @param {Libp2p} node
- * @returns {import('znode')} */
-export async function createNode(node){
-  try {
-    // const node = await Libp2p.create(libp2pConfig);
-    // node.handle('/p2p/mimirCloud/0.0.1a', )
-    await node.start()
-    let rpcDial = initNode(node);
-    // global.mimirNode = node;
-    initCli(node)
-    // console.log('Started Node', node.peerId.toB58String() ,node.multiaddrs);
-    return rpcDial;
-  } catch (e) {
-    throw e;
-  }
 }

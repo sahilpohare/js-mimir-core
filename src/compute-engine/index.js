@@ -22,6 +22,7 @@ import vm from "isolated-vm";
 export default async function (cloudFunc, args, vmArgs) {
   let job = new vm.Isolate({ memoryLimit: vmArgs.memoryLimit });
   let ctx = await job.createContext();
+
   ctx.global.setSync("global", ctx.global.derefInto());
   ctx.global.setSync("log", (out) => {
     console.log(out);

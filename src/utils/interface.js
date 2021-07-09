@@ -1,3 +1,7 @@
+import { Multiaddr } from "multiaddr";
+import { PROTOCOL } from "../constants/index.js";
+import taskSenderAgent from "../taskSenderAgent/index.js";
+
  /** @type {Map<String,Function|Promise>}*/
  global.args = new Map();
  global.username = 'sahil'
@@ -9,17 +13,37 @@ export let defineCommand = (command, handler = async (data) => {}) => {
   global.args[command] = handler;
 };
 
-export function initCli(node){
+/**@param {import('../index.js').default} mimirInstance*/
+export function initCli(mimirInstance){
   defineCommand("cls", console.clear);
 
   defineCommand("setusr", (data) => {
     username = data[0];
   });
   defineCommand("whoami", (data) => {
-    console.log(username, node.peerId.toB58String());
+    console.log(username, mimirInstance.peerId.toB58String());
+    console.log(username, mimirInstance.peerStore.peers);
   });
 
-  defineCommand('')
+  defineCommand("testRPC", async (data) => {
+    let rpc = await mimirInstance.dialRPC(data[0]);
+    let [functionImage, error] = await taskSenderAgent('./tests/exampleproject/index.js');
+    if (error){
+      console.log("error");
+      return 
+    }
+    rpc.handleRequest({
+      functionImage : functionImage,
+      body : { name : "Sahil"},
+      requestAgent : mimirInstance.peerId.toB58String()
+    }, node);
+  });
+
+  defineCommand("listpeers", (data) => {
+    mimirInstance.peerStore.peers.forEach((p) => {
+      if (p.protocols.includes(PROTOCOL)) console.log(p.id.toB58String());
+    });
+  });
 }
 process.stdin.on("data", (msg) => {
   let sliced = msg.slice(0, -1).toString();

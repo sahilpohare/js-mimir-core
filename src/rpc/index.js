@@ -1,6 +1,5 @@
 import computeEngine from "../compute-engine/index.js";
 import ipfs from "../bundles/ipfsBundle.js";
-import { createNode } from "../bundles/libp2pBundle.js";
 
 /**
  * @typedef MimirRequest
@@ -21,36 +20,35 @@ import { createNode } from "../bundles/libp2pBundle.js";
 
 /** 
  * @param {MimirRequest} request
- * @param {import("libp2p")} node The local host used to dial and make the
  * @returns {MimirResponse}
 */
-export async function handleRequest(request, node) {
-  const source = ipfs.cat(request.funtionImage);
-  let contents = "";
-  const decoder = new TextDecoder("utf-8");
+// export async function handleRequest(request) {
+//   console.log("Handl",this)
+//   // console.trace("PEERID", this.peerId.toB58String())
+//   //Download Function From Ipfs
+//   const source = ipfs.cat(request.funtionImage);
+//   let func = "";
+//   const decoder = new TextDecoder("utf-8");
 
-  for await (const chunk of source) {
-    contents += decoder.decode(chunk, {
-      stream: true,
-    });
-  }
-  console.log(contents);
-  let puta = await computeEngine(contents, [request], {memoryLimit : 100, timeout : 100});
-  console.log(puta);
-  let [out, err] = puta;
-  let response = {};
+//   for await (const chunk of source) {
+//     func += decoder.decode(chunk, {
+//       stream: true,
+//     });
+//   }
 
-  if (err){
-    return {
-      responseAgent : node.peerId.toB58String(),
-      statusCode : 500,
-      outputHash : ""
-    }
-  }
+//   //Pass in Compute Engine 
+//   let [out, err] = await computeEngine(func, [request], {memoryLimit : 100, timeout : 100});
+//   if (err){
+//     return {
+//      // responseAgent : node.peerId.toB58String(),
+//       statusCode : 500,
+//       outputHash : ""
+//     }
+//   }
 
-  return {
-    statusCode : 200,
-    responseAgent : node.peerId.toB58String(),
-    body : out
-  }
-}
+//   return {
+//     statusCode : 200,
+//     // responseAgent : this.peerId.toB58String(),
+//     body : out
+//   }
+// }

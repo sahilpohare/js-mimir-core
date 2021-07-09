@@ -1,74 +1,120 @@
 import Libp2p from "libp2p";
-import ipfsBundle from "./bundles/ipfsBundle.js";
-import libp2pConfig, { createNode, initNode } from "./bundles/libp2pBundle.js";
-import './utils/interface.js'
+import computeEngine from "./compute-engine/index.js";
+import ipfs from "./bundles/ipfsBundle.js";
+import libp2pConfig, { initNode } from "./bundles/libp2pBundle.js";
+import { PROTOCOL } from "./constants/index.js";
+import PeerID from "peer-id";
+import "./utils/interface.js";
 import { initCli } from "./utils/interface.js";
+import { create as createRpc } from "./bundles/rpcBundle.js";
 
+export const protocol = "/mimir/0.0.1a";
 
-const protocol = '/mimir/0.0.1a'
+/**@type {MimirRpcConfig} */
 
-class Mimir{
-  /**@type {Libp2p} */
-  node
+class Mimir extends Libp2p {
   /**@type {import("libp2p/src/").Libp2pConfig} */
   #config;
 
-  rpcDialer;
+  /**@type {import('znode')}*/
+  dialRPC;
 
-  constructor (config = libp2pConfig){
-    this.#config = config;
+  constructor(_options) {
+    super(_options);
   }
 
-  async start(){
-    try{
-      this.node = await Libp2p.create(this.#config);
-      this.peerId = this.node.peerId;
-      this.multiaddrs = this.node.multiaddrs;
-      this._isStarted = this.node._isStarted;
-      this.addresses = this.node.addresses;
-      this.addrs = this.multiaddrs.map((ma)=>`${ma.toString()}/p2p/${this.node.peerId.toB58String()}`)
-      this.pubsub = this.node.pubsub;
-      
-      this.dialHandleRequest = await createNode(this.node);
-      this.stop = this.node.stop;
+  /**@type {import("libp2p/src/").Libp2pConfig} */
+  static async create(options = libp2pConfig) {
+    if (options.peerId) {
+      return new Mimir(options);
+    }
 
-      return this.dialHandleRequest;
-    } catch(e){
+    const peerId = await PeerID.create();
+
+    options.peerId = peerId;
+    let node = new Mimir(options);
+    let rpcObj = {
+      handleRequest: async (request) => {
+        console.log("Recived RPC", "Peer 2");
+        return node.handleRequest(request);
+      },
+      test: async () => {
+        console.log("Recieved RPC");
+        return "Hello";
+      },
+    };
+    try {
+      node.dialRPC = await createRpc(node, rpcObj, PROTOCOL);
+    } catch {
+      console.log("FAILED TO CREATE RPC");
+    }
+    return node;
+  }
+
+  async start() {
+    try {
+      await super.start();
+      initNode(this);
+      console.log(
+        "Started Node",
+        this.multiaddrs.map((ma) => `${ma}/p2p/${this.peerId.toB58String()}`)
+      );
+
+      initCli(this);
+
+      return this.dialRPC;
+    } catch (e) {
       throw new Error(e, "Error Starting Node");
     }
   }
-  
-  async stop(){
-    return await this.node.stop();
-  }
-  // async create(params) {
-  //   try{
-  //     this._node = await createNode();
-  //     this._ipfs = ipfsBundle
-  //   } catch (e){
-  //     throw e;
-  //   }
-  // }
 
-  async createTask(){
+  //TEST
+  /**
+   * @param {import('peer-id')|Multiaddr|string} peer - The peer to dial
+   * @param {import("./rpc/index.js").MimirRequest request
+   * */
+  async sendComputeRequest(request, peer) {
+    let rpc = await this.dialRPC(peer);
+    return await rpc.handleRequest(request);
   }
 
-  // async compute(){
-  //   return this._node
-  // }
+  async createTask() {}
+
+  /**
+   * @param {import("./rpc/index.js").MimirRequest} request
+   * @returns {import("./rpc/index.js").MimirResponse}
+   */
+  async handleRequest(request) {
+    //Download Function From Ipfs
+    const source = ipfs.cat(request.funtionImage);
+    let func = "";
+    const decoder = new TextDecoder("utf-8");
+
+    for await (const chunk of source) {
+      func += decoder.decode(chunk, {
+        stream: true,
+      });
+    }
+
+    //Pass in Compute Engine
+    let [out, err] = await computeEngine(func, [request], {
+      memoryLimit: 100,
+      timeout: 100,
+    });
+    if (err) {
+      return {
+        // responseAgent : node.peerId.toB58String(),
+        statusCode: 500,
+        outputHash: "",
+      };
+    }
+
+    return {
+      statusCode: 200,
+      responseAgent: this.peerId.toB58String(),
+      body: out,
+    };
+  }
 }
-// try {
-//   let node = await createNode()
-//   // const node = await Libp2p.create(libp2pConfig);
-//   // // node.handle('/p2p/mimirCloud/0.0.1a', )
- 
-//   // await node.start()
-//   // await initNode(node)
-//   // //global.mimirNode = node;
-//   // initCli(node)
-//   // console.log('Started Node', node.peerId.toB58String() ,node.multiaddrs);
-// } catch (e) {
-//   throw e;
-// }
 
 export default Mimir;
