@@ -34,8 +34,11 @@ class Mimir extends Libp2p {
     options.peerId = peerId;
     let node = new Mimir(options);
     let rpcObj = {
+      /** @param {import("./rpc/index.js").MimirRequest} request */
       handleRequest: async (request) => {
-        console.log("Recived RPC", "Peer 2");
+        console.log(
+          `[${new Date().toLocaleTimeString()}] Request for function/${request.funtionImage} by ${request.requestAgent}`
+        );
         return node.handleRequest(request);
       },
       test: async () => {

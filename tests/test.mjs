@@ -31,11 +31,6 @@ describe("Tests IPFS Getter", async () => {
 
 describe("RPC Test", async () => {
   it("Checks RPC", async () => {
-    let [cid, err] = await taskSender("./tests/exampleproject/index.js");
-    if (err) {
-      assert.fail("error");
-    }
-    assert.strictEqual(cid, "QmSFi6cKPB5nfP98Kp4csqDWqoPq9n8KXkTZ19V4VE6g7U");
     let instances = await Promise.all([Mimir.create(), Mimir.create()]);
     
     try {
@@ -49,7 +44,7 @@ describe("RPC Test", async () => {
       {
         body: { name: "Sahil" },
         requestAgent: instances[0].peerId.toB58String(),
-        funtionImage: cid,
+        funtionImage: "QmSFi6cKPB5nfP98Kp4csqDWqoPq9n8KXkTZ19V4VE6g7U",
       },
       `${instances[1].multiaddrs[0]}/p2p/${instances[1].peerId.toB58String()}`
     );
