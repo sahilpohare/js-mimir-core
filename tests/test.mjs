@@ -40,7 +40,7 @@ describe("RPC Test", async () => {
       assert.fail("FAILED to start Instances");
     }
 
-    let res = await instances[0].sendComputeRequest(
+    let res = await instances[0].request(
       {
         body: { name: "Sahil" },
         requestAgent: instances[0].peerId.toB58String(),

@@ -28,8 +28,8 @@ export default async function (cloudFunc, args, vmArgs) {
   ctx.global.setSync("log", (out) => {
     console.log(`[Function]`,out);
   });
-  ctx.global.setSync("axios", axios.);
-  let script = await job.compileModul   e(cloudFunc, { filename: "function.js" });
+  // ctx.global.setSync("axios", axios.);
+  let script = await job.compileModule(cloudFunc, { filename: "function.js" });
   try {
     await script.instantiate(ctx, () => {});
     await script.evaluate({ promise: true, timeout: vmArgs.timeout });

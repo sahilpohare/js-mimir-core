@@ -7,10 +7,15 @@ import PeerID from "peer-id";
 import "./utils/interface.js";
 import { initCli } from "./utils/interface.js";
 import { create as createRpc } from "./bundles/rpcBundle.js";
+import DelegatedContentRouting from 'libp2p-delegated-content-routing';
 
 export const protocol = "/mimir/0.0.1a";
 
-/**@type {MimirRpcConfig} */
+/**
+ * @typedef {Object} MimirConfig
+ * @property {import("libp2p/src/").Libp2pConfig} libp2p
+ * @property {boolean} cli?
+*/
 
 class Mimir extends Libp2p {
   /**@type {import("libp2p/src/").Libp2pConfig} */
@@ -23,23 +28,31 @@ class Mimir extends Libp2p {
     super(_options);
   }
 
-  /**@type {import("libp2p/src/").Libp2pConfig} */
+  /**
+   * @param options
+   * @returns {Mimir}
+   */
   static async create(options = libp2pConfig) {
+    
     if (options.peerId) {
+      // options.modules.contentRouting.concat(new DelegatedContentRouting(options.peerId,ipfs));
       return new Mimir(options);
     }
-
+    
     const peerId = await PeerID.create();
-
+    
     options.peerId = peerId;
+    // options.modules.contentRouting = [new DelegatedContentRouting(peerId,ipfs)];
     let node = new Mimir(options);
+
     let rpcObj = {
       /** @param {import("./rpc/index.js").MimirRequest} request */
       handleRequest: async (request) => {
         console.log(
           `[${new Date().toLocaleTimeString()}] Request for function/${request.funtionImage} by ${request.requestAgent}`
         );
-        return node.handleRequest(request);
+        console.log(request);
+        return await node.handleRequest(request);
       },
       test: async () => {
         console.log("Recieved RPC");
@@ -54,7 +67,7 @@ class Mimir extends Libp2p {
     return node;
   }
 
-  async start() {
+  async start(cli = false) {
     try {
       await super.start();
       initNode(this);
@@ -62,8 +75,7 @@ class Mimir extends Libp2p {
         "Started Node",
         this.multiaddrs.map((ma) => `${ma}/p2p/${this.peerId.toB58String()}`)
       );
-
-      initCli(this);
+      if(cli) initCli(this);
 
       return this.dialRPC;
     } catch (e) {
@@ -76,8 +88,9 @@ class Mimir extends Libp2p {
    * @param {import('peer-id')|Multiaddr|string} peer - The peer to dial
    * @param {import("./rpc/index.js").MimirRequest request
    * */
-  async sendComputeRequest(request, peer) {
+  async request(request, peer) {
     let rpc = await this.dialRPC(peer);
+    request.requestAgent = this.peerId.toB58String()
     return await rpc.handleRequest(request);
   }
 
@@ -101,12 +114,12 @@ class Mimir extends Libp2p {
 
     //Pass in Compute Engine
     let [out, err] = await computeEngine(func, [request], {
-      memoryLimit: 100,
+      memoryLimit: 256,
       timeout: 100,
     });
     if (err) {
       return {
-        // responseAgent : node.peerId.toB58String(),
+        responseAgent : node.peerId.toB58String(),
         statusCode: 500,
         outputHash: "",
       };
