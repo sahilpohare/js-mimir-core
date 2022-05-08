@@ -4,7 +4,7 @@ Mimir is a service that provides serverless function compute over IPFS and Libp2
  
 
 ### Usage!
-
+!NOT YET READY. JUST ON POC STAGE
 ```js
 import Mimir from '@mimir/core';
 
